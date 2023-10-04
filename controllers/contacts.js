@@ -1,37 +1,60 @@
+// controllers/contacts.js
 const Contact = require('../models/contact');
-const Joi = require("joi");
+const Joi = require('joi');
 
 const addSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().required(),
-  phone: Joi.string().required(),
-  favorite: Joi.boolean(),
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    phone: Joi.string().required(),
+    favorite: Joi.boolean(),
 });
 
 const updateFavoriteSchema = Joi.object({
-  favorite: Joi.boolean().required(),
+    favorite: Joi.boolean().required(),
 });
 
 const getAll = async (req, res) => {
-  try {
-    const result = await Contact.find();
-    console.log(result);
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
+    const { _id: owner } = req.user;
+    const { page = 1, limit = 10, favorite, name, email } = req.query;
+    const skip = (page - 1) * limit;
+    const query = { owner };
+
+    if (favorite !== undefined) {
+        query.favorite = favorite;
+    }
+
+    if (name) {
+        query.name = { $regex: name, $options: 'i' }; 
+    }
+
+    if (email) {
+        query.email = { $regex: email, $options: 'i' };
+    }
+
+    try {
+        const contacts = await Contact.find(query)
+            .skip(skip)
+            .limit(limit)
+            .populate('owner', 'name email');
+        res.json(contacts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
 };
 
 const add = async (req, res) => {
-  const { error } = addSchema.validate(req.body);
+  const { _id: owner } = req.user;
+  console.log(req.user);
+  const { error } = addSchema.validate(req.body); 
   if (error) {
     return res.status(400).json({ message: error.message });
   }
 
-  const result = await Contact.create(req.body);
+  const result = await Contact.create({ ...req.body, owner });
   res.status(201).json(result);
 };
+
 
 const getContactById = async (req, res) => {
   const { id } = req.params;

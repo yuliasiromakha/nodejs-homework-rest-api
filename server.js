@@ -1,6 +1,8 @@
 // server.js
 const mongoose = require("mongoose");
-// const { DB_HOST} = require('./config')
+const dotenv = require('dotenv'); 
+
+dotenv.config();
 
 const DB_HOST = 'mongodb+srv://yuliasiromakha:ZeU4Bw0MfEseH7Et@mycluster.geac3vj.mongodb.net/db-contacts?retryWrites=true&w=majority'
 
