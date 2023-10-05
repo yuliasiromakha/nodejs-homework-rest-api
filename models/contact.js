@@ -1,5 +1,5 @@
 // models/contacts.js
-const {Schema, model} = require("mongoose");
+const { Schema, model } = require("mongoose");
 
 const contactsSchema = new Schema({
   name: {
@@ -22,13 +22,7 @@ const contactsSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'user',
   }
-})
-
-contactsSchema.post("save", (error, data, next) => {
-    error.status = 400;
-    console.log(error);
-    next();
-})
+});
 
 const Contact = model("contact", contactsSchema);
 

@@ -24,7 +24,7 @@ const getAll = async (req, res) => {
     }
 
     if (name) {
-        query.name = { $regex: name, $options: 'i' }; 
+        query.name = { $regex: name, $options: 'i' };
     }
 
     if (email) {
@@ -44,68 +44,89 @@ const getAll = async (req, res) => {
 };
 
 const add = async (req, res) => {
-  const { _id: owner } = req.user;
-  console.log(req.user);
-  const { error } = addSchema.validate(req.body); 
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
+    const { _id: owner } = req.user;
+    const { error } = addSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.message });
+    }
 
-  const result = await Contact.create({ ...req.body, owner });
-  res.status(201).json(result);
+    const result = await Contact.create({ ...req.body, owner });
+    res.status(201).json(result);
 };
 
-
 const getContactById = async (req, res) => {
-  const { id } = req.params;
-  const result = await Contact.findById(id);
-  if (!result) {
-    res.status(404).json({ message: 'Not found' });
-  }
-  res.json(result);
+    const { id } = req.params;
+    const contact = await Contact.findById(id);
+
+    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Access forbidden' });
+    }
+
+    if (!contact) {
+        res.status(404).json({ message: 'Not found' });
+    }
+    res.json(contact);
 };
 
 const updateContact = async (req, res) => {
-  const { id } = req.params;
-  const result = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+    const { id } = req.params;
+    const contact = await Contact.findById(id);
 
-  if (!result) {
-    res.status(404).json({ message: 'Not found' });
-  }
-  res.json(result);
+    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Access forbidden' });
+    }
+
+    const result = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+
+    if (!result) {
+        res.status(404).json({ message: 'Not found' });
+    }
+    res.json(result);
 };
 
 const updateFavorite = async (req, res) => {
-  const { id } = req.params;
-  const { error } = updateFavoriteSchema.validate(req.body);
+    const { id } = req.params;
+    const { error } = updateFavoriteSchema.validate(req.body);
 
-  if (error) {
-    return res.status(400).json({ message: 'missing field favorite' });
-  }
+    if (error) {
+        return res.status(400).json({ message: 'missing field favorite' });
+    }
 
-  const result = await Contact.findByIdAndUpdate(id, { favorite: req.body.favorite }, { new: true });
+    const contact = await Contact.findById(id);
 
-  if (!result) {
-    res.status(404).json({ message: 'Not found' });
-  }
-  res.json(result);
+    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Access forbidden' });
+    }
+
+    const result = await Contact.findByIdAndUpdate(id, { favorite: req.body.favorite }, { new: true });
+
+    if (!result) {
+        res.status(404).json({ message: 'Not found' });
+    }
+    res.json(result);
 };
 
 const deleteById = async (req, res) => {
-  const { id } = req.params;
-  const result = await Contact.findByIdAndRemove(id);
+    const { id } = req.params;
+    const contact = await Contact.findById(id);
 
-  if (!result) {
-    res.status(404).json({ message: 'Not found' });
-  }
-  res.json({ message: "Successfully deleted" });
+    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Access forbidden' });
+    }
+
+    const result = await Contact.findByIdAndRemove(id);
+
+    if (!result) {
+        res.status(404).json({ message: 'Not found' });
+    }
+    res.json({ message: "Successfully deleted" });
 };
 
 module.exports = {
-  getAll,
-  add,
-  getContactById,
-  updateContact,
-  deleteById,
-  updateFavorite,
+    getAll,
+    add,
+    getContactById,
+    updateContact,
+    deleteById,
+    updateFavorite,
 };
