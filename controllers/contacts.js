@@ -70,18 +70,24 @@ const getContactById = async (req, res) => {
 
 const updateContact = async (req, res) => {
     const { id } = req.params;
-    const contact = await Contact.findById(id);
+    const { _id: owner } = req.user;
 
-    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Access forbidden' });
+    try {
+        const updatedContact = await Contact.findOneAndUpdate(
+            { _id: id, owner }, 
+            req.body, 
+            { new: true } 
+        );
+
+        if (!updatedContact) {
+            return res.status(404).json({ message: 'Not found' });
+        }
+
+        res.json(updatedContact);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
-
-    const result = await Contact.findByIdAndUpdate(id, req.body, { new: true });
-
-    if (!result) {
-        res.status(404).json({ message: 'Not found' });
-    }
-    res.json(result);
 };
 
 const updateFavorite = async (req, res) => {
@@ -92,33 +98,27 @@ const updateFavorite = async (req, res) => {
         return res.status(400).json({ message: 'missing field favorite' });
     }
 
-    const contact = await Contact.findById(id);
+    const contact = await Contact.findOneAndUpdate(
+        { _id: id, owner: req.user._id },
+        { favorite: req.body.favorite }, 
+        { new: true } 
+    );
 
-    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Access forbidden' });
-    }
-
-    const result = await Contact.findByIdAndUpdate(id, { favorite: req.body.favorite }, { new: true });
-
-    if (!result) {
+    if (!contact) {
         res.status(404).json({ message: 'Not found' });
     }
-    res.json(result);
+
+    res.json(contact);
 };
 
 const deleteById = async (req, res) => {
     const { id } = req.params;
-    const contact = await Contact.findById(id);
+    const contact = await Contact.findOneAndRemove({ _id: id, owner: req.user._id });
 
-    if (!contact || contact.owner.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Access forbidden' });
+    if (!contact) {
+        return res.status(404).json({ message: 'Not found' });
     }
 
-    const result = await Contact.findByIdAndRemove(id);
-
-    if (!result) {
-        res.status(404).json({ message: 'Not found' });
-    }
     res.json({ message: "Successfully deleted" });
 };
 
