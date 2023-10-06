@@ -1,4 +1,4 @@
-// isValidId.js
+// middlewares/isValidId.js
 const { isValidObjectId } = require("mongoose");
 
 const isValidId = (req, res, next) => {
