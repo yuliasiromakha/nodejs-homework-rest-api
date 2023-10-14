@@ -6,13 +6,16 @@ const {upload} = require('../../middlewares/upload');
 
 const router = express.Router();
 
-router.post('/register', cntrl.register)
-router.post('/login', cntrl.login)
+router.post('/register', cntrl.register);
+router.get('/verify/:verificationToken', cntrl.verifyEmail); 
+router.post('/verify', cntrl.resendVerifyEmail);
 
-router.get('/current', authenticate, cntrl.getCurrent)
+router.post('/login', cntrl.login);
 
-router.post('/logout', authenticate, cntrl.logout)
+router.get('/current', authenticate, cntrl.getCurrent);
 
-router.patch('avatars', authenticate, upload.single('avatar'), cntrl.updateAvatar)
+router.post('/logout', authenticate, cntrl.logout);
+
+router.patch('/avatars', authenticate, upload.single('avatar'), cntrl.updateAvatar);
 
 module.exports = router;
